@@ -1,0 +1,1023 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="theme-color" content="#0b4f6c" />
+<title>Bass Buddy — Fishing Coach & Fish-Dex</title>
+<style>
+  :root{
+    --bg:#f4f7f9; --card:#ffffff; --ink:#12242e; --muted:#5d7079;
+    --line:#dde6ea; --brand:#0b6e8c; --brand-ink:#083f52; --accent:#e8a33d;
+    --good:#2e9e5b; --ok:#8bbf3a; --meh:#e0a92e; --bad:#d6603f;
+    --chip:#eef4f7; --shadow:0 1px 3px rgba(8,40,55,.08),0 6px 20px rgba(8,40,55,.06);
+    --radius:16px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0d171c; --card:#152833; --ink:#e7eff3; --muted:#9fb3bd;
+      --line:#25404d; --brand:#3fb0d1; --brand-ink:#cdeaf3; --accent:#f0b757;
+      --chip:#1c343f; --shadow:0 1px 3px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0d171c; --card:#152833; --ink:#e7eff3; --muted:#9fb3bd;
+    --line:#25404d; --brand:#3fb0d1; --brand-ink:#cdeaf3; --accent:#f0b757;
+    --chip:#1c343f; --shadow:0 1px 3px rgba(0,0,0,.4),0 8px 24px rgba(0,0,0,.35);
+  }
+  :root[data-theme="light"]{
+    --bg:#f4f7f9; --card:#ffffff; --ink:#12242e; --muted:#5d7079;
+    --line:#dde6ea; --brand:#0b6e8c; --brand-ink:#083f52; --accent:#e8a33d;
+    --chip:#eef4f7; --shadow:0 1px 3px rgba(8,40,55,.08),0 6px 20px rgba(8,40,55,.06);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font:16px/1.5 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-text-size-adjust:100%;}
+  a{color:var(--brand)}
+  .wrap{max-width:760px;margin:0 auto;padding:0 16px 96px;}
+  header.app{position:sticky;top:0;z-index:20;background:linear-gradient(135deg,var(--brand-ink),var(--brand));
+    color:#fff;padding:14px 16px calc(14px + env(safe-area-inset-top));margin-bottom:14px;
+    padding-top:calc(14px + env(safe-area-inset-top));}
+  header.app .row{max-width:760px;margin:0 auto;display:flex;align-items:center;gap:10px;}
+  header.app h1{font-size:1.15rem;margin:0;font-weight:700;letter-spacing:.2px;flex:1}
+  header.app .sub{max-width:760px;margin:2px auto 0;font-size:.8rem;opacity:.85}
+  .themebtn{background:rgba(255,255,255,.15);border:0;color:#fff;border-radius:10px;
+    width:38px;height:38px;font-size:1.1rem;cursor:pointer}
+  nav.tabs{position:sticky;top:0;z-index:15;display:flex;gap:6px;background:var(--bg);
+    padding:8px 0;margin-bottom:6px;}
+  nav.tabs button{flex:1;padding:11px 8px;border:1px solid var(--line);background:var(--card);
+    color:var(--muted);border-radius:12px;font-weight:600;font-size:.92rem;cursor:pointer;
+    display:flex;flex-direction:column;align-items:center;gap:2px;line-height:1.1}
+  nav.tabs button .ic{font-size:1.15rem}
+  nav.tabs button[aria-selected="true"]{background:var(--brand);border-color:var(--brand);
+    color:#fff;box-shadow:var(--shadow)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);
+    padding:16px;margin:12px 0;box-shadow:var(--shadow)}
+  .card h2{margin:0 0 4px;font-size:1.05rem;display:flex;align-items:center;gap:8px}
+  .card h3{margin:14px 0 6px;font-size:.95rem}
+  .muted{color:var(--muted)}
+  .small{font-size:.85rem}
+  label{display:block;font-weight:600;font-size:.86rem;margin:10px 0 4px}
+  input,select,textarea{width:100%;padding:11px 12px;border:1px solid var(--line);
+    border-radius:12px;background:var(--bg);color:var(--ink);font:inherit}
+  textarea{min-height:64px;resize:vertical}
+  .rowflex{display:flex;gap:10px;flex-wrap:wrap}
+  .rowflex>*{flex:1;min-width:120px}
+  button.btn{appearance:none;border:0;border-radius:12px;padding:12px 14px;font:inherit;
+    font-weight:700;cursor:pointer;background:var(--brand);color:#fff;box-shadow:var(--shadow)}
+  button.btn.secondary{background:var(--chip);color:var(--ink);border:1px solid var(--line);box-shadow:none}
+  button.btn.wide{width:100%}
+  button.btn:active{transform:translateY(1px)}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px}
+  .chip{border:1px solid var(--line);background:var(--chip);border-radius:999px;
+    padding:8px 12px;font-size:.85rem;cursor:pointer;user-select:none;display:flex;align-items:center;gap:6px}
+  .chip[aria-pressed="true"]{background:var(--brand);color:#fff;border-color:var(--brand)}
+  .chip[aria-pressed="true"] .dot{background:#fff}
+  .toggle{display:flex;align-items:center;gap:8px;margin-top:8px}
+  .badge{display:inline-flex;align-items:center;gap:6px;background:var(--chip);border:1px solid var(--line);
+    border-radius:999px;padding:4px 10px;font-size:.78rem;font-weight:600}
+  .pill{display:inline-block;padding:3px 9px;border-radius:999px;font-size:.75rem;font-weight:700;color:#fff}
+  .rate-good{background:var(--good)} .rate-ok{background:var(--ok)} .rate-meh{background:var(--meh)} .rate-bad{background:var(--bad)}
+  .meter{height:12px;border-radius:999px;background:var(--chip);overflow:hidden;border:1px solid var(--line)}
+  .meter>span{display:block;height:100%;background:linear-gradient(90deg,var(--accent),var(--brand))}
+  .rec{border-left:4px solid var(--brand);padding:2px 0 2px 12px;margin:12px 0}
+  .rec h3{margin:0 0 3px}
+  .rec .why{font-size:.86rem;color:var(--muted)}
+  ul.tight{margin:6px 0;padding-left:20px} ul.tight li{margin:3px 0}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:10px;margin-top:10px}
+  .fish{position:relative;border:1px solid var(--line);border-radius:14px;background:var(--card);
+    padding:10px 6px;text-align:center;cursor:pointer;overflow:hidden}
+  .fish .emoji{font-size:2rem;line-height:1;display:block;margin:2px 0 4px;
+    filter:grayscale(1) brightness(.6);opacity:.28}
+  .fish .nm{font-size:.72rem;font-weight:600;color:var(--muted)}
+  .fish.caught{border-color:var(--good);box-shadow:0 0 0 1px var(--good) inset}
+  .fish.caught .emoji{filter:none;opacity:1}
+  .fish.caught .nm{color:var(--ink)}
+  .fish .count{position:absolute;top:4px;right:6px;font-size:.68rem;font-weight:700;color:var(--good)}
+  .fish .new{position:absolute;top:4px;left:6px;background:var(--accent);color:#12242e;
+    font-size:.6rem;font-weight:800;border-radius:6px;padding:1px 4px}
+  .modal{position:fixed;inset:0;background:rgba(6,20,26,.55);display:none;align-items:flex-end;
+    justify-content:center;z-index:50;padding:0}
+  .modal.open{display:flex}
+  .sheet{background:var(--card);width:100%;max-width:760px;border-radius:18px 18px 0 0;
+    padding:18px 16px calc(18px + env(safe-area-inset-bottom));max-height:88vh;overflow:auto;box-shadow:var(--shadow)}
+  .sheet h2{margin-top:0}
+  .closebar{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+  .closebar button{background:none;border:0;font-size:1.5rem;color:var(--muted);cursor:pointer}
+  .logitem{display:flex;gap:10px;padding:10px 0;border-top:1px solid var(--line);align-items:center}
+  .logitem .lg-emoji{font-size:1.6rem}
+  .logitem .lg-meta{flex:1;min-width:0}
+  .logitem .lg-meta b{display:block}
+  .logitem img{width:46px;height:46px;object-fit:cover;border-radius:10px}
+  .hidden{display:none !important}
+  .note{background:var(--chip);border:1px dashed var(--line);border-radius:12px;padding:10px 12px;font-size:.85rem}
+  .kv{display:flex;justify-content:space-between;gap:10px;font-size:.9rem;padding:3px 0}
+  .kv b{font-weight:700}
+  footer.tip{text-align:center;font-size:.78rem;color:var(--muted);margin-top:20px}
+  .spinner{display:inline-block;width:16px;height:16px;border:2px solid var(--line);
+    border-top-color:var(--brand);border-radius:50%;animation:spin .8s linear infinite;vertical-align:-3px}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--brand-ink);
+    color:#fff;padding:12px 18px;border-radius:12px;font-weight:600;box-shadow:var(--shadow);
+    z-index:80;opacity:0;transition:opacity .2s, transform .2s;pointer-events:none;max-width:90vw;text-align:center}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(-4px)}
+</style>
+</head>
+<body>
+<header class="app">
+  <div class="row">
+    <h1>🎣 Bass Buddy</h1>
+    <button class="themebtn" id="themeBtn" title="Toggle theme" aria-label="Toggle light/dark theme">🌗</button>
+  </div>
+  <div class="sub" id="headerSub">Your bass fishing coach &amp; Fish-Dex — plan a trip, then collect the catch.</div>
+</header>
+
+<div class="wrap">
+  <nav class="tabs" role="tablist">
+    <button id="tab-plan"   role="tab" aria-selected="true"  onclick="showTab('plan')"><span class="ic">🧭</span>Plan a Trip</button>
+    <button id="tab-dex"    role="tab" aria-selected="false" onclick="showTab('dex')"><span class="ic">📖</span>Fish-Dex</button>
+    <button id="tab-setup"  role="tab" aria-selected="false" onclick="showTab('setup')"><span class="ic">⚙️</span>Setup</button>
+  </nav>
+
+  <!-- ============ PLAN TAB ============ -->
+  <section id="panel-plan">
+    <div class="card">
+      <h2>🧭 Plan today's trip</h2>
+      <p class="muted small">Tell the app where and when you're headed. It pulls live weather and turns it
+        into a bite forecast plus what to throw and where.</p>
+
+      <label for="place">Where are you fishing?</label>
+      <div class="rowflex">
+        <input id="place" placeholder="Type a lake, town, or place…" style="flex:2" />
+        <button class="btn secondary" style="flex:0 0 auto" onclick="searchPlace()">Search</button>
+        <button class="btn secondary" style="flex:0 0 auto" onclick="useMyLocation()">📍 Me</button>
+      </div>
+      <div id="placeResults" class="chips"></div>
+      <div id="locStatus" class="small muted" style="margin-top:6px"></div>
+
+      <label for="waterType">Water type</label>
+      <select id="waterType" onchange="saveState()">
+        <option value="pond">Pond / small lake (bank fishing)</option>
+        <option value="lake" selected>Lake / reservoir</option>
+        <option value="river">River / stream (moving water)</option>
+      </select>
+
+      <label for="tripTime">When?</label>
+      <input id="tripTime" type="datetime-local" />
+
+      <button class="btn wide" style="margin-top:16px" onclick="planTrip()">Get my recommendations</button>
+      <div class="toggle small"><input type="checkbox" id="manualWx" onchange="toggleManualWx()" style="width:auto">
+        <label for="manualWx" style="margin:0">No internet? Enter conditions manually</label></div>
+
+      <div id="manualWxBox" class="hidden">
+        <div class="rowflex">
+          <div><label>Air temp (°F)</label><input id="mAir" type="number" value="72"></div>
+          <div><label>Water temp (°F, if known)</label><input id="mWater" type="number" placeholder="optional"></div>
+        </div>
+        <div class="rowflex">
+          <div><label>Sky</label><select id="mSky">
+            <option value="10">Clear / sunny</option><option value="55">Partly cloudy</option>
+            <option value="90">Overcast</option></select></div>
+          <div><label>Wind (mph)</label><input id="mWind" type="number" value="6"></div>
+        </div>
+        <div><label>Pressure trend</label><select id="mPress">
+          <option value="falling">Falling (front coming)</option>
+          <option value="steady" selected>Steady</option>
+          <option value="rising">Rising (after a front)</option></select></div>
+      </div>
+    </div>
+
+    <div id="planOutput"></div>
+  </section>
+
+  <!-- ============ FISH-DEX TAB ============ -->
+  <section id="panel-dex" class="hidden">
+    <div class="card">
+      <h2>📖 Fish-Dex <span id="dexArea" class="badge" style="font-weight:600"></span></h2>
+      <p class="muted small">Every fish you're likely to catch in your area. Log a catch to unlock its card —
+        can you and your son <b>catch 'em all</b>?</p>
+      <div class="kv"><span id="dexProgressText">0 of 0 unlocked</span><b id="dexPct">0%</b></div>
+      <div class="meter"><span id="dexBar" style="width:0%"></span></div>
+      <div id="badges" class="chips" style="margin-top:12px"></div>
+      <div class="rowflex" style="margin-top:12px">
+        <button class="btn" onclick="openLog()">＋ Log a catch</button>
+        <button class="btn secondary" onclick="exportLog()">⬇︎ Export log</button>
+      </div>
+      <div class="toggle small"><input type="checkbox" id="showAllFish" onchange="renderDex()" style="width:auto">
+        <label for="showAllFish" style="margin:0">Show all species (not just my area)</label></div>
+    </div>
+
+    <div class="card">
+      <h2>🐟 Collection</h2>
+      <div id="fishGrid" class="grid"></div>
+    </div>
+
+    <div class="card">
+      <h2>📜 Catch log <span id="logCount" class="muted small"></span></h2>
+      <div id="logList"><p class="muted small">No catches yet. Your first one is waiting!</p></div>
+    </div>
+  </section>
+
+  <!-- ============ SETUP TAB ============ -->
+  <section id="panel-setup" class="hidden">
+    <div class="card">
+      <h2>👤 Who's fishing?</h2>
+      <p class="muted small">The app tunes its advice to the angler. Update this as your son grows —
+        recommendations shift from "get bites &amp; have fun" toward technique and bigger fish.</p>
+      <label>Angler's name (optional)</label>
+      <input id="anglerName" placeholder="e.g. Sam" oninput="saveState()">
+      <div class="rowflex">
+        <div><label>Age</label><input id="anglerAge" type="number" min="2" max="99" value="7" onchange="saveState()"></div>
+        <div><label>Experience</label><select id="anglerSkill" onchange="saveState()">
+          <option value="new">Brand new</option>
+          <option value="learning" selected>Learning the ropes</option>
+          <option value="capable">Getting good</option>
+          <option value="skilled">Skilled</option>
+        </select></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>🌎 Home region</h2>
+      <p class="muted small">Sets which species fill your Fish-Dex and links you to the right fishing
+        regulations. Auto-fills when you search a location, but you can override it.</p>
+      <label>Region</label>
+      <select id="region" onchange="onRegionChange()">
+        <option value="south">US — South / Southeast</option>
+        <option value="northeast">US — Northeast</option>
+        <option value="midwest" selected>US — Midwest</option>
+        <option value="west">US — West / Southwest</option>
+        <option value="widespread">Not sure / mixed</option>
+      </select>
+      <div id="regsLink" class="note" style="margin-top:10px"></div>
+    </div>
+
+    <div class="card">
+      <h2>🧰 Your gear</h2>
+      <p class="muted small">Tap what you own. The app recommends lures you actually have — and suggests
+        smart first buys for the ones you don't.</p>
+      <h3>Rod &amp; reel</h3>
+      <div class="chips" id="gearRods"></div>
+      <h3>Lures &amp; bait you own</h3>
+      <div class="chips" id="gearLures"></div>
+      <div class="toggle"><input type="checkbox" id="openToBuy" checked onchange="saveState()" style="width:auto">
+        <label for="openToBuy" style="margin:0">I'm open to buying a few recommended items</label></div>
+    </div>
+
+    <div class="card">
+      <h2>🗑 Data</h2>
+      <p class="muted small">Everything is stored only on this device (nothing leaves your phone).</p>
+      <button class="btn secondary" onclick="resetAll()">Reset all data</button>
+    </div>
+  </section>
+
+  <footer class="tip">
+    Weather by <a href="https://open-meteo.com" target="_blank" rel="noopener">Open‑Meteo</a> ·
+    Always check your local fishing regulations &amp; wear a life jacket. Tight lines! 🎣
+  </footer>
+</div>
+
+<!-- ============ LOG CATCH MODAL ============ -->
+<div class="modal" id="logModal">
+  <div class="sheet">
+    <div class="closebar"><h2 style="margin:0">🎉 Log a catch</h2><button onclick="closeLog()" aria-label="Close">×</button></div>
+    <label>What did you catch?</label>
+    <select id="logSpecies"></select>
+    <div class="rowflex">
+      <div><label>Length (in)</label><input id="logLen" type="number" step="0.1" placeholder="optional"></div>
+      <div><label>Weight (lb)</label><input id="logWt" type="number" step="0.1" placeholder="optional"></div>
+    </div>
+    <label>When</label>
+    <input id="logWhen" type="datetime-local">
+    <label>Where (optional)</label>
+    <input id="logWhere" placeholder="e.g. the dock at Miller Pond">
+    <label>Notes (optional)</label>
+    <textarea id="logNotes" placeholder="Bait used, weather, who caught it…"></textarea>
+    <label>Photo (optional)</label>
+    <input id="logPhoto" type="file" accept="image/*" capture="environment" onchange="previewPhoto()">
+    <div id="photoPreview"></div>
+    <button class="btn wide" style="margin-top:14px" onclick="saveCatch()">Save catch 🐟</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ============================================================
+   Bass Buddy — single-file bass fishing coach + Fish-Dex
+   All data stays in localStorage. No accounts, no tracking.
+   ============================================================ */
+
+/* ---------- Species catalog (North American freshwater) ----------
+   regions: south|northeast|midwest|west  (widespread = all)
+   waters:  pond|lake|river
+   cat: bass|panfish|catfish|pike|trout|rough  (for badges & advice)  */
+const FISH = [
+  {id:"lmb", name:"Largemouth Bass", emoji:"🐟", cat:"bass", regions:["south","northeast","midwest","west"], waters:["pond","lake","river"],
+    blurb:"The classic. Ambush predator that loves cover — docks, weeds, laydowns.", habitat:"Weeds, docks, wood, shade"},
+  {id:"smb", name:"Smallmouth Bass", emoji:"🐟", cat:"bass", regions:["northeast","midwest","west"], waters:["lake","river"],
+    blurb:"Pound-for-pound the hardest fighter. Loves rock and current.", habitat:"Rocky points, current seams"},
+  {id:"spot", name:"Spotted Bass", emoji:"🐟", cat:"bass", regions:["south","west"], waters:["lake","river"],
+    blurb:"Cousin of the largemouth; often deeper and schooling.", habitat:"Rocky drop-offs, points"},
+  {id:"bgill", name:"Bluegill", emoji:"🐠", cat:"panfish", regions:["south","northeast","midwest","west"], waters:["pond","lake","river"],
+    blurb:"The kid-catcher. Eager biters, perfect for building confidence.", habitat:"Docks, shallows, weeds"},
+  {id:"redear", name:"Redear Sunfish", emoji:"🐠", cat:"panfish", regions:["south"], waters:["pond","lake"],
+    blurb:"Aka 'shellcracker' — bigger than bluegill, loves the bottom.", habitat:"Bottom near shells/snails"},
+  {id:"pkseed", name:"Pumpkinseed", emoji:"🐠", cat:"panfish", regions:["northeast","midwest"], waters:["pond","lake"],
+    blurb:"Gorgeous little sunfish, common up north.", habitat:"Weedy shallows"},
+  {id:"gsun", name:"Green Sunfish", emoji:"🐠", cat:"panfish", regions:["south","northeast","midwest","west"], waters:["pond","river"],
+    blurb:"Scrappy and aggressive; hits lures bigger than itself.", habitat:"Cover, edges"},
+  {id:"bcrap", name:"Black Crappie", emoji:"🐠", cat:"panfish", regions:["south","northeast","midwest","west"], waters:["pond","lake"],
+    blurb:"Schooling 'papermouth' — great eating, loves brush.", habitat:"Brush piles, docks"},
+  {id:"wcrap", name:"White Crappie", emoji:"🐠", cat:"panfish", regions:["south","midwest"], waters:["lake","river"],
+    blurb:"Crappie of stained water and rivers.", habitat:"Timber, creek arms"},
+  {id:"yperch", name:"Yellow Perch", emoji:"🐠", cat:"panfish", regions:["northeast","midwest","west"], waters:["lake"],
+    blurb:"Schooling, tasty, and willing — a northern favorite.", habitat:"Sandy/weedy flats"},
+  {id:"rbass", name:"Rock Bass", emoji:"🐠", cat:"panfish", regions:["northeast","midwest"], waters:["lake","river"],
+    blurb:"Red-eyed sunfish that lives around rocks; bites readily.", habitat:"Rocks, current"},
+  {id:"ccat", name:"Channel Catfish", emoji:"🐡", cat:"catfish", regions:["south","northeast","midwest","west"], waters:["pond","lake","river"],
+    blurb:"Whiskered bottom feeder; a blast on stinky bait.", habitat:"Deep holes, bottom"},
+  {id:"flat", name:"Flathead Catfish", emoji:"🐡", cat:"catfish", regions:["south","midwest"], waters:["river","lake"],
+    blurb:"Big predator cat that eats live bait.", habitat:"Log jams, deep holes"},
+  {id:"bull", name:"Bullhead", emoji:"🐡", cat:"catfish", regions:["south","northeast","midwest","west"], waters:["pond","lake"],
+    blurb:"Small, easy catfish — bites all day on worms.", habitat:"Muddy bottoms"},
+  {id:"npike", name:"Northern Pike", emoji:"🐊", cat:"pike", regions:["northeast","midwest","west"], waters:["lake","river"],
+    blurb:"Toothy ambush hunter — use a wire leader!", habitat:"Weed edges, bays"},
+  {id:"pick", name:"Chain Pickerel", emoji:"🐊", cat:"pike", regions:["south","northeast"], waters:["pond","lake","river"],
+    blurb:"Mini-pike with a big attitude; ambushes from weeds.", habitat:"Weedy shallows"},
+  {id:"musky", name:"Muskellunge", emoji:"🐊", cat:"pike", regions:["northeast","midwest"], waters:["lake","river"],
+    blurb:"'The fish of 10,000 casts' — the trophy of the north.", habitat:"Weed lines, structure"},
+  {id:"wall", name:"Walleye", emoji:"🐟", cat:"other", regions:["northeast","midwest","west"], waters:["lake","river"],
+    blurb:"Low-light feeder prized for the table.", habitat:"Rocky humps, breaks"},
+  {id:"wbass", name:"White Bass", emoji:"🐟", cat:"other", regions:["south","midwest"], waters:["lake","river"],
+    blurb:"Schooling scrapper that blitzes bait on the surface.", habitat:"Open water, current"},
+  {id:"sbass", name:"Striped Bass", emoji:"🐟", cat:"other", regions:["south","northeast","west"], waters:["lake","river"],
+    blurb:"Hard-pulling open-water bruiser in big reservoirs.", habitat:"Open water, main lake"},
+  {id:"carp", name:"Common Carp", emoji:"🐟", cat:"rough", regions:["south","northeast","midwest","west"], waters:["pond","lake","river"],
+    blurb:"Big, strong, and everywhere — surprisingly fun on light gear.", habitat:"Mud flats, shallows"},
+  {id:"rtrout", name:"Rainbow Trout", emoji:"🐟", cat:"trout", regions:["northeast","west","midwest"], waters:["river","lake"],
+    blurb:"Cold-water jumper, often stocked in spring.", habitat:"Cool streams, lakes"},
+  {id:"btrout", name:"Brown Trout", emoji:"🐟", cat:"trout", regions:["northeast","midwest","west"], waters:["river","lake"],
+    blurb:"Wary and wily — the trout that teaches patience.", habitat:"Undercut banks, pools"},
+  {id:"bktrout", name:"Brook Trout", emoji:"🐟", cat:"trout", regions:["northeast"], waters:["river"],
+    blurb:"Jewel of cold headwater streams.", habitat:"Cold, clear streams"}
+];
+
+const GEAR_RODS = [
+  {id:"spincast", label:"Spincast combo (push-button)"},
+  {id:"spinning", label:"Spinning rod & reel"},
+  {id:"baitcast", label:"Baitcaster"},
+  {id:"kids", label:"Kids' rod"}
+];
+const GEAR_LURES = [
+  {id:"live", label:"Live bait rig (worms/minnows)", emoji:"🪱"},
+  {id:"bobber", label:"Bobber + hook", emoji:"🎈"},
+  {id:"plastic", label:"Soft plastics (worms/craws)", emoji:"🪱"},
+  {id:"spinner", label:"Spinnerbait / inline spinner", emoji:"✨"},
+  {id:"chatter", label:"Chatterbait", emoji:"🌀"},
+  {id:"crank", label:"Crankbait", emoji:"🎣"},
+  {id:"jig", label:"Jig", emoji:"⚓"},
+  {id:"topwater", label:"Topwater (frog/popper)", emoji:"💥"},
+  {id:"spoon", label:"Spoon", emoji:"🥄"}
+];
+
+/* ---------- State ---------- */
+const DEFAULT_STATE = {
+  place:"", lat:null, lon:null, waterType:"lake", region:"midwest", regionAuto:false,
+  anglerName:"", anglerAge:7, anglerSkill:"learning",
+  rods:["spincast"], lures:["live","bobber"], openToBuy:true,
+  catches:[], theme:null
+};
+let S = load();
+
+function load(){
+  try{ const r = JSON.parse(localStorage.getItem("bassbuddy")); if(r) return Object.assign({}, DEFAULT_STATE, r);}catch(e){}
+  return JSON.parse(JSON.stringify(DEFAULT_STATE));
+}
+function persist(){ localStorage.setItem("bassbuddy", JSON.stringify(S)); }
+
+/* Pull current form values into state before persisting */
+function saveState(){
+  S.waterType = val("waterType") || S.waterType;
+  S.anglerName = val("anglerName");
+  S.anglerAge = parseInt(val("anglerAge"))||S.anglerAge;
+  S.anglerSkill = val("anglerSkill")||S.anglerSkill;
+  S.openToBuy = document.getElementById("openToBuy").checked;
+  persist();
+}
+function val(id){ const e=document.getElementById(id); return e?e.value:""; }
+
+/* ---------- Theme ---------- */
+function applyTheme(){
+  const t = S.theme;
+  if(t) document.documentElement.setAttribute("data-theme", t);
+  else document.documentElement.removeAttribute("data-theme");
+}
+document.getElementById("themeBtn").onclick = ()=>{
+  const cur = document.documentElement.getAttribute("data-theme");
+  const isDark = cur ? cur==="dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  S.theme = isDark ? "light" : "dark"; persist(); applyTheme();
+};
+
+/* ---------- Tabs ---------- */
+function showTab(name){
+  ["plan","dex","setup"].forEach(n=>{
+    document.getElementById("panel-"+n).classList.toggle("hidden", n!==name);
+    document.getElementById("tab-"+n).setAttribute("aria-selected", n===name);
+  });
+  if(name==="dex") renderDex();
+  window.scrollTo(0,0);
+}
+
+/* ---------- Toast ---------- */
+let toastT;
+function toast(msg){
+  const el=document.getElementById("toast"); el.textContent=msg; el.classList.add("show");
+  clearTimeout(toastT); toastT=setTimeout(()=>el.classList.remove("show"),2600);
+}
+
+/* ============================================================
+   LOCATION + WEATHER
+   ============================================================ */
+const REGION_BY_STATE = {
+  // Northeast
+  Maine:"northeast","New Hampshire":"northeast",Vermont:"northeast",Massachusetts:"northeast",
+  "Rhode Island":"northeast",Connecticut:"northeast","New York":"northeast","New Jersey":"northeast",
+  Pennsylvania:"northeast",Maryland:"northeast",Delaware:"northeast","West Virginia":"northeast",Virginia:"northeast",
+  // Midwest
+  Ohio:"midwest",Michigan:"midwest",Indiana:"midwest",Illinois:"midwest",Wisconsin:"midwest",
+  Minnesota:"midwest",Iowa:"midwest",Missouri:"midwest","North Dakota":"midwest","South Dakota":"midwest",
+  Nebraska:"midwest",Kansas:"midwest",
+  // South
+  Kentucky:"south",Tennessee:"south","North Carolina":"south","South Carolina":"south",Georgia:"south",
+  Florida:"south",Alabama:"south",Mississippi:"south",Arkansas:"south",Louisiana:"south",Texas:"south",Oklahoma:"south",
+  // West
+  Montana:"west",Wyoming:"west",Colorado:"west","New Mexico":"west",Idaho:"west",Utah:"west",Arizona:"west",
+  Nevada:"west",Washington:"west",Oregon:"west",California:"west",Alaska:"west",Hawaii:"west"
+};
+
+async function searchPlace(){
+  const q = val("place").trim();
+  if(!q){ toast("Type a place first"); return; }
+  const box = document.getElementById("placeResults"); box.innerHTML='<span class="small muted"><span class="spinner"></span> Searching…</span>';
+  try{
+    const r = await fetch(`https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(q)}&count=6&language=en&format=json`);
+    const j = await r.json();
+    if(!j.results || !j.results.length){ box.innerHTML='<span class="small muted">No matches. Try a nearby town.</span>'; return; }
+    box.innerHTML='';
+    j.results.forEach(res=>{
+      const label = [res.name, res.admin1, res.country_code].filter(Boolean).join(", ");
+      const b=document.createElement("button"); b.className="chip"; b.textContent=label;
+      b.onclick=()=>{ pickPlace(res.latitude,res.longitude,label,res.admin1); box.innerHTML=''; };
+      box.appendChild(b);
+    });
+  }catch(e){ box.innerHTML='<span class="small muted">Search failed — check your connection or enter conditions manually.</span>'; }
+}
+
+function pickPlace(lat,lon,label,admin1){
+  S.lat=lat; S.lon=lon; S.place=label; document.getElementById("place").value=label;
+  if(admin1 && REGION_BY_STATE[admin1]){ S.region=REGION_BY_STATE[admin1]; S.regionAuto=true; syncRegionUI(); }
+  document.getElementById("locStatus").innerHTML=`📍 Set to <b>${escapeHtml(label)}</b>`;
+  persist();
+}
+
+function useMyLocation(){
+  const st=document.getElementById("locStatus");
+  if(!navigator.geolocation){ st.textContent="Geolocation not available — search by name instead."; return; }
+  st.innerHTML='<span class="spinner"></span> Getting your location…';
+  navigator.geolocation.getCurrentPosition(async pos=>{
+    const {latitude,longitude}=pos.coords; S.lat=latitude; S.lon=longitude;
+    let label=`My location (${latitude.toFixed(3)}, ${longitude.toFixed(3)})`, admin1=null;
+    try{
+      const r=await fetch(`https://api.bigdatacloud.net/data/reverse-geocode-client?latitude=${latitude}&longitude=${longitude}&localityLanguage=en`);
+      const j=await r.json();
+      admin1=j.principalSubdivision; const town=j.city||j.locality||"";
+      label=[town,admin1].filter(Boolean).join(", ")||label;
+    }catch(e){}
+    S.place=label; document.getElementById("place").value=label;
+    if(admin1 && REGION_BY_STATE[admin1]){ S.region=REGION_BY_STATE[admin1]; S.regionAuto=true; syncRegionUI(); }
+    st.innerHTML=`📍 Set to <b>${escapeHtml(label)}</b>`; persist();
+  }, err=>{ st.textContent="Couldn't get location ("+err.message+"). Search by name instead."; }, {timeout:10000});
+}
+
+async function fetchWeather(lat,lon){
+  const url=`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}`
+    +`&current=temperature_2m,cloud_cover,wind_speed_10m,precipitation,surface_pressure,is_day`
+    +`&hourly=surface_pressure&past_days=1&forecast_days=1`
+    +`&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=auto`;
+  const r=await fetch(url); if(!r.ok) throw new Error("weather http "+r.status);
+  const j=await r.json();
+  const c=j.current;
+  // pressure trend: compare current pressure to ~3h earlier from hourly series
+  let trend="steady", delta=0;
+  try{
+    const times=j.hourly.time, pres=j.hourly.surface_pressure;
+    const now=new Date(c.time).getTime();
+    let iNow=0, best=Infinity;
+    times.forEach((t,i)=>{ const d=Math.abs(new Date(t).getTime()-now); if(d<best){best=d;iNow=i;} });
+    const iPast=Math.max(0,iNow-3);
+    delta=pres[iNow]-pres[iPast];
+    if(delta<=-1.0) trend="falling"; else if(delta>=1.0) trend="rising"; else trend="steady";
+  }catch(e){}
+  return {
+    airTemp:Math.round(c.temperature_2m), cloud:c.cloud_cover, wind:Math.round(c.wind_speed_10m),
+    precip:c.precipitation, pressure:c.surface_pressure, isDay:c.is_day===1,
+    pressureTrend:trend, pressureDelta:delta, source:"live"
+  };
+}
+
+function manualWeather(){
+  return {
+    airTemp:parseInt(val("mAir"))||70,
+    waterTempManual: val("mWater")?parseInt(val("mWater")):null,
+    cloud:parseInt(val("mSky"))||30, wind:parseInt(val("mWind"))||5,
+    precip:0, pressureTrend:val("mPress")||"steady", isDay:true, source:"manual"
+  };
+}
+function toggleManualWx(){ document.getElementById("manualWxBox").classList.toggle("hidden", !document.getElementById("manualWx").checked); }
+
+/* ============================================================
+   RECOMMENDATION ENGINE
+   ============================================================ */
+function seasonFor(date, lat){
+  const m=date.getMonth(); // 0-11
+  const north = (lat==null) || lat>=0;
+  // northern hemisphere mapping; flip for southern
+  let s;
+  if(m<=1||m===11) s="winter";
+  else if(m<=4) s="spring";
+  else if(m<=7) s="summer";
+  else s="fall";
+  if(!north){ s={winter:"summer",summer:"winter",spring:"fall",fall:"spring"}[s]; }
+  return s;
+}
+
+/* Estimate the bass "phase" from water temp (measured/estimated). */
+function phaseFromTemp(t){
+  if(t<45) return {key:"cold", label:"Cold water (bass sluggish)"};
+  if(t<58) return {key:"prespawn", label:"Pre-spawn (bass feeding up)"};
+  if(t<68) return {key:"spawn", label:"Spawn (bass shallow & territorial)"};
+  if(t<80) return {key:"summer", label:"Summer / post-spawn"};
+  return {key:"hot", label:"Hot water (bass seek cool/shade)"};
+}
+function estWaterTemp(wx, season){
+  if(wx.waterTempManual) return wx.waterTempManual;
+  // rough: water lags air; nudge by season
+  let base=wx.airTemp - 6;
+  if(season==="spring") base-=2; if(season==="summer") base+=1; if(season==="winter") base-=4;
+  return Math.max(34, Math.round(base));
+}
+
+function biteScore(wx, date, season){
+  let score=55, factors=[];
+  const hr=date.getHours();
+  const dawn=(hr>=5&&hr<9), dusk=(hr>=18&&hr<21), midday=(hr>=11&&hr<16);
+  // time of day
+  if(dawn||dusk){ score+=18; factors.push(["＋","Prime low-light feeding window"]); }
+  else if(midday && season==="summer"){ score-=12; factors.push(["－","Midday summer sun — bass go deep/shady"]); }
+  else if(midday && (season==="spring"||season==="fall")){ score+=4; factors.push(["＋","Midday warmth can trigger cool-season bites"]); }
+  // clouds
+  if(wx.cloud>=65){ score+=10; factors.push(["＋","Overcast skies keep bass roaming shallow"]); }
+  else if(wx.cloud<=20 && (dawn||dusk)===false){ score-=5; factors.push(["－","Bright bluebird sky — fish tighter to cover"]); }
+  // wind
+  if(wx.wind>=6 && wx.wind<=16){ score+=8; factors.push(["＋","A little chop ('walleye chop') positions feeders"]); }
+  else if(wx.wind>18){ score-=8; factors.push(["－","Heavy wind — tough casting, fish protected banks"]); }
+  else if(wx.wind<=2){ score-=3; factors.push(["－","Dead calm & slick — go finesse"]); }
+  // pressure
+  if(wx.pressureTrend==="falling"){ score+=12; factors.push(["＋","Falling pressure ahead of weather — feeding window!"]); }
+  else if(wx.pressureTrend==="rising"){ score-=10; factors.push(["－","Rising pressure after a front — bites get finicky"]); }
+  // season/temp
+  if(season==="spring"){ score+=8; factors.push(["＋","Spring — bass shallow & aggressive"]); }
+  if(season==="fall"){ score+=6; factors.push(["＋","Fall feed-up — bass chasing bait"]); }
+  if(season==="winter"){ score-=14; factors.push(["－","Winter — cold, slow metabolism; downsize & slow down"]); }
+  if(wx.precip>0.05){ score-=4; factors.push(["－","Active rain — a light drizzle can be great, a downpour less so"]); }
+  score=Math.max(5,Math.min(98,score));
+  return {score, factors};
+}
+function rateLabel(s){
+  if(s>=75) return {t:"Great",c:"rate-good"};
+  if(s>=58) return {t:"Good",c:"rate-ok"};
+  if(s>=42) return {t:"Fair",c:"rate-meh"};
+  return {t:"Tough",c:"rate-bad"};
+}
+
+function timeWindows(season, wx){
+  if(wx.cloud>=70) return "Overcast today means bass may bite <b>all day</b> — don't wait for evening.";
+  if(season==="summer") return "Best bets: <b>first light to ~9am</b> and <b>7pm to dark</b>. Midday, fish deep or shade.";
+  if(season==="winter") return "Warmest part of the day, <b>roughly 11am–3pm</b>, when the sun has warmed the shallows.";
+  return "<b>Dawn and dusk</b> are prime, but spring/fall bass often feed through the <b>late morning</b> too.";
+}
+
+function whereToFish(water, phase, season, wx){
+  const bullets=[];
+  if(water==="pond"){
+    bullets.push("Walk the whole bank — bass in small ponds relate to <b>any</b> cover: an overhanging tree, a dock, reeds, a pipe, or a lone stump.");
+    bullets.push("Fish the <b>shady side</b> and any spot where shallow meets a bit deeper water.");
+  } else if(water==="river"){
+    bullets.push("Bass sit <b>out of the main current</b> and wait for food to wash by — target eddies behind rocks, logjams, and inside bends.");
+    bullets.push("Cast <b>upstream</b> and work your lure back naturally with the current.");
+  } else { // lake
+    bullets.push("Look for <b>points, weed edges, docks, and where a creek enters</b> — bass use these as highways and ambush spots.");
+    bullets.push("No boat? Find the bank spot that reaches deep water fastest (a point or channel swing).");
+  }
+  if(phase.key==="spawn") bullets.push("It's the spawn — check <b>shallow, protected flats</b> (backs of coves) for beds; sight-fishing can be magic.");
+  if(phase.key==="prespawn") bullets.push("Pre-spawn: bass stage on the <b>first drop-off outside</b> spawning flats — great big-fish timing.");
+  if(phase.key==="summer"||phase.key==="hot") bullets.push("Warm water: <b>early/late shallow</b>, midday go to <b>shade, deeper water, or moving water</b> with more oxygen.");
+  if(phase.key==="cold") bullets.push("Cold water: find the <b>warmest water</b> — sun-baked north banks, dark bottoms — and fish slow and deep.");
+  if(wx.wind>=6) bullets.push("Fish the <b>windblown bank</b> — wind pushes plankton and baitfish into it, and bass follow.");
+  return bullets;
+}
+
+/* Lure logic: returns {primary:[...ids], why, buys:[...]} */
+function lureAdvice(water, phase, season, wx, owned, openToBuy){
+  const want=[]; // ordered by preference for today
+  const clear = wx.cloud<=30 && wx.wind<=4;      // clear/calm → finesse
+  const active = wx.cloud>=60 || (wx.wind>=6&&wx.wind<=16) || wx.pressureTrend==="falling"; // reaction bite
+  const lowLight = !wx.isDay || wx.cloud>=75;
+
+  if(phase.key==="cold"){ want.push("jig","plastic","spoon"); }
+  else if(phase.key==="spawn"){ want.push("plastic","jig","spinner"); }
+  else {
+    if(active) want.push("spinner","chatter","crank");
+    if((phase.key==="summer"||phase.key==="hot") && (lowLight||season==="summer")) want.push("topwater");
+    if(clear) want.push("plastic","jig");
+    want.push("plastic","spinner","crank"); // safe staples
+  }
+  // de-dup keep order
+  const order=[...new Set(want)];
+  const have = order.filter(id=>owned.includes(id));
+  const missing = order.filter(id=>!owned.includes(id)).slice(0,2);
+
+  let why;
+  if(phase.key==="cold") why="Cold water = slow presentations. A jig or soft plastic crawled on the bottom, or a spoon, tempts sluggish bass.";
+  else if(active) why="Active conditions (wind, clouds, or falling pressure) call for a <b>moving reaction bait</b> — cover water and trigger strikes.";
+  else if(clear) why="Clear, calm, bright water calls for <b>finesse</b> — a natural soft plastic worked slowly fools pressured, wary bass.";
+  else why="A soft plastic is the never-fail starter; add a moving bait to cover water and find active fish.";
+  if(order.includes("topwater")&&(have.includes("topwater"))) why+=" And don't miss the <b>topwater</b> window at low light — the most fun bite in fishing.";
+
+  // starter buy suggestions
+  const BUY = {
+    plastic:"a pack of 4\" green-pumpkin soft plastic stick worms (Senko-style) — the easiest bass bait to learn",
+    spinner:"a 3/8oz white/chartreuse spinnerbait — nearly weedless and casts a mile",
+    chatter:"a 3/8oz bladed jig (chatterbait) in white or black/blue",
+    crank:"a shallow square-bill crankbait in a shad or craw color",
+    jig:"a 3/8oz black/blue finesse jig with a craw trailer",
+    topwater:"a hollow-body frog (for weeds) or a small popper",
+    spoon:"a 1/2oz silver casting spoon",
+    live:"nightcrawlers and a few #6 hooks",
+    bobber:"a small bobber + #6 hooks — the #1 way to get a kid catching"
+  };
+  const buys = openToBuy ? missing.map(id=>({id, text:BUY[id]})).filter(b=>b.text) : [];
+  return {have, why, buys, order};
+}
+
+function ageStrategy(age, skill){
+  const tips=[]; let headline;
+  const young = age<=6, kid = age<=9;
+  if(young || skill==="new"){
+    headline="Goal #1: bend a rod and giggle. Bites beat trophies.";
+    tips.push("Start with a <b>bobber, a small hook, and a worm</b> near a dock or weeds for <b>bluegill</b> — near-guaranteed action keeps them hooked on fishing.");
+    tips.push("Keep sessions <b>short (30–60 min)</b> and bring snacks. End on a high note, not a meltdown.");
+    tips.push("Let them reel <b>every</b> fish, even yours. Cheer loudly. Take the photo.");
+    tips.push("Safety: <b>life jacket near water</b>, pinch down barbs, and mind the hook on the backcast.");
+  } else if(kid || skill==="learning"){
+    headline="Mix guaranteed panfish action with real shots at a bass.";
+    tips.push("Keep a <b>bobber/worm setup</b> going for steady panfish bites, and take turns casting a <b>soft plastic or spinnerbait</b> for bass.");
+    tips.push("Teach one skill per trip — casting accuracy, or a slow steady retrieve. Praise effort, not just fish.");
+    tips.push("Have them watch the line and feel for the 'tick' of a bite. Setting the hook is the fun part.");
+  } else if(skill==="capable"){
+    headline="Time to target bass on purpose and read the water.";
+    tips.push("Pick a pattern from the plan above and <b>commit to it</b> for a stretch before switching.");
+    tips.push("Work cover thoroughly and quietly; make repeated accurate casts to the best-looking spots.");
+    tips.push("Start keeping mental notes: what depth, what lure, what time the bites came.");
+  } else {
+    headline="Fish like an angler: pattern the fish and chase your personal best.";
+    tips.push("Run-and-gun the highest-percentage spots the plan flags; adjust speed & depth until you get bit.");
+    tips.push("Downsize and slow down when the bite's tough; upsize and speed up when they're active.");
+    tips.push("Log every catch in the Fish-Dex to build your own seasonal playbook for this water.");
+  }
+  return {headline, tips};
+}
+
+function regsUrl(region){
+  const q = encodeURIComponent("fishing license and regulations "+({
+    south:"southern US state", northeast:"northeastern US state", midwest:"midwestern US state",
+    west:"western US state", widespread:""
+  }[region]||""));
+  return "https://www.google.com/search?q="+q;
+}
+
+/* ---------- Orchestration ---------- */
+async function planTrip(){
+  saveState();
+  const out=document.getElementById("planOutput");
+  const date = val("tripTime")? new Date(val("tripTime")) : new Date();
+  const season = seasonFor(date, S.lat);
+  const manual = document.getElementById("manualWx").checked;
+
+  out.innerHTML='<div class="card"><span class="spinner"></span> Reading the water…</div>';
+  let wx;
+  try{
+    if(manual || S.lat==null){
+      if(!manual && S.lat==null){
+        out.innerHTML='<div class="card"><h2>📍 Pick a location first</h2><p class="muted small">Search a place or tap 📍 Me above, or check "enter conditions manually" to plan without internet.</p></div>';
+        return;
+      }
+      wx=manualWeather();
+    } else {
+      wx=await fetchWeather(S.lat,S.lon);
+    }
+  }catch(e){
+    out.innerHTML='<div class="card"><h2>⚠️ Couldn\'t fetch weather</h2><p class="muted small">Check your connection, or tick "enter conditions manually" and try again.</p></div>';
+    return;
+  }
+
+  const water=S.waterType;
+  const wTemp = estWaterTemp(wx, season);
+  const phase = phaseFromTemp(wTemp);
+  const {score,factors}=biteScore(wx,date,season);
+  const rate=rateLabel(score);
+  const owned=S.lures;
+  const lure=lureAdvice(water,phase,season,wx,owned,S.openToBuy);
+  const where=whereToFish(water,phase,season,wx);
+  const strat=ageStrategy(S.anglerAge,S.anglerSkill);
+  const windows=timeWindows(season,wx);
+  const who = S.anglerName? S.anglerName : "your angler";
+
+  const skyTxt = wx.cloud>=70?"overcast":wx.cloud>=35?"partly cloudy":"mostly clear";
+  const dateTxt = date.toLocaleString([], {weekday:"short", month:"short", day:"numeric", hour:"numeric", minute:"2-digit"});
+
+  let html="";
+
+  // Forecast card
+  html+=`<div class="card">
+    <h2>🎯 Bite forecast <span class="pill ${rate.c}">${rate.t}</span></h2>
+    <div class="kv"><span>${escapeHtml(S.place||"Your spot")} · ${cap(season)} · ${dateTxt}</span><b>${score}/100</b></div>
+    <div class="meter"><span style="width:${score}%"></span></div>
+    <div class="chips" style="margin-top:10px">
+      <span class="badge">🌡 ${wx.airTemp}°F air</span>
+      <span class="badge">💧 ~${wTemp}°F water</span>
+      <span class="badge">☁️ ${skyTxt}</span>
+      <span class="badge">🌬 ${wx.wind} mph wind</span>
+      <span class="badge">📊 ${cap(wx.pressureTrend)} pressure</span>
+      ${wx.source==="manual"?'<span class="badge">✍️ manual</span>':''}
+    </div>
+    <h3>What's driving it</h3>
+    <ul class="tight">${factors.map(f=>`<li><b>${f[0]}</b> ${f[1]}</li>`).join("")}</ul>
+    <p class="small muted">Phase: ${phase.label}.</p>
+  </div>`;
+
+  // Time
+  html+=`<div class="card"><h2>⏰ When to fish</h2><p>${windows}</p></div>`;
+
+  // Where
+  html+=`<div class="card"><h2>📍 Where to cast</h2><ul class="tight">${where.map(b=>`<li>${b}</li>`).join("")}</ul></div>`;
+
+  // Lures
+  let lureHtml=`<div class="card"><h2>🎣 What to throw</h2><p class="why muted small">${lure.why}</p>`;
+  if(lure.have.length){
+    lureHtml+=`<h3>From your tackle box</h3><ul class="tight">`+
+      lure.have.map(id=>{const g=GEAR_LURES.find(x=>x.id===id);return `<li>${g.emoji||"🎣"} <b>${g.label}</b></li>`;}).join("")+`</ul>`;
+  } else {
+    lureHtml+=`<p class="note">Your tackle box doesn't have today's top picks yet — see the suggestions below.</p>`;
+  }
+  if(lure.buys.length){
+    lureHtml+=`<h3>Worth picking up</h3><ul class="tight">`+
+      lure.buys.map(b=>`<li>🛒 ${b.text}</li>`).join("")+`</ul>`;
+  }
+  lureHtml+=`</div>`;
+  html+=lureHtml;
+
+  // Strategy (age)
+  html+=`<div class="card"><h2>🧠 Strategy for ${escapeHtml(who)} <span class="badge">${S.anglerAge} yrs · ${skillLabel(S.anglerSkill)}</span></h2>
+    <p><b>${strat.headline}</b></p><ul class="tight">${strat.tips.map(t=>`<li>${t}</li>`).join("")}</ul></div>`;
+
+  // Regs
+  html+=`<div class="card"><h2>📜 Before you go</h2>
+    <p class="small">Make sure you have a valid <b>fishing license</b> and know the local rules (size/bag limits, catch-and-release areas).
+    <a href="${regsUrl(S.region)}" target="_blank" rel="noopener">Look up your state's regulations →</a></p>
+    <p class="small muted">Catch a fish? Head to the <b>Fish-Dex</b> tab and log it to unlock its card!</p></div>`;
+
+  out.innerHTML=html;
+}
+
+function skillLabel(s){return {new:"brand new",learning:"learning",capable:"getting good",skilled:"skilled"}[s]||s;}
+function cap(s){return s? s[0].toUpperCase()+s.slice(1):s;}
+function escapeHtml(s){return (s||"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+
+/* ============================================================
+   FISH-DEX
+   ============================================================ */
+function areaFish(){
+  if(document.getElementById("showAllFish") && document.getElementById("showAllFish").checked) return FISH.slice();
+  return FISH.filter(f=> f.regions.includes(S.region) && f.waters.includes(S.waterType));
+}
+function caughtIds(){ return new Set(S.catches.map(c=>c.fishId)); }
+function catchCount(id){ return S.catches.filter(c=>c.fishId===id).length; }
+
+function renderDex(){
+  const list = areaFish();
+  const got = caughtIds();
+  const unlocked = list.filter(f=>got.has(f.id)).length;
+  const pct = list.length? Math.round(100*unlocked/list.length):0;
+  document.getElementById("dexArea").textContent = `${regionLabel(S.region)} · ${waterLabel(S.waterType)}`;
+  document.getElementById("dexProgressText").textContent = `${unlocked} of ${list.length} unlocked`;
+  document.getElementById("dexPct").textContent = pct+"%";
+  document.getElementById("dexBar").style.width = pct+"%";
+
+  const grid=document.getElementById("fishGrid"); grid.innerHTML="";
+  list.forEach(f=>{
+    const n=catchCount(f.id); const has=n>0;
+    const d=document.createElement("div"); d.className="fish"+(has?" caught":"");
+    d.innerHTML=`${has?`<span class="count">×${n}</span>`:""}<span class="emoji">${f.emoji}</span><span class="nm">${has?f.name:"???"}</span>`;
+    d.onclick=()=>showFish(f.id);
+    grid.appendChild(d);
+  });
+  if(!list.length){ grid.innerHTML='<p class="muted small">No species tagged for this area/water combo. Try "Show all species".</p>'; }
+
+  renderBadges();
+  renderLogList();
+}
+
+function renderBadges(){
+  const wrap=document.getElementById("badges"); wrap.innerHTML="";
+  const got=caughtIds(); const cats={}; S.catches.forEach(c=>{const f=FISH.find(x=>x.id===c.fishId); if(f)cats[f.cat]=(cats[f.cat]||0)+1;});
+  const panSpecies=new Set(S.catches.map(c=>c.fishId).filter(id=>{const f=FISH.find(x=>x.id===id);return f&&f.cat==="panfish";})).size;
+  const areaGot = areaFish().filter(f=>got.has(f.id)).length, areaTot=areaFish().length;
+  const B=[];
+  if(S.catches.length>=1) B.push("🎣 First Catch");
+  if([...got].some(id=>{const f=FISH.find(x=>x.id===id);return f&&f.cat==="bass";})) B.push("🐟 First Bass");
+  if(panSpecies>=3) B.push("🐠 Panfish Master");
+  if(S.catches.length>=12) B.push("🎖 Angler's Dozen");
+  const pb = S.catches.reduce((m,c)=>Math.max(m, parseFloat(c.length)||0),0);
+  if(pb>0) B.push(`📏 PB: ${pb}\"`);
+  if(areaTot>0 && areaGot===areaTot) B.push("🏆 Local Legend — caught 'em all!");
+  if(!B.length){ wrap.innerHTML='<span class="small muted">No badges yet — log your first catch to start earning them!</span>'; return; }
+  B.forEach(t=>{const s=document.createElement("span");s.className="badge";s.textContent=t;wrap.appendChild(s);});
+}
+
+function renderLogList(){
+  const box=document.getElementById("logList"); const c=document.getElementById("logCount");
+  c.textContent = S.catches.length? `(${S.catches.length})`:"";
+  if(!S.catches.length){ box.innerHTML='<p class="muted small">No catches yet. Your first one is waiting!</p>'; return; }
+  const sorted=[...S.catches].sort((a,b)=>new Date(b.when)-new Date(a.when));
+  box.innerHTML="";
+  sorted.forEach(cat=>{
+    const f=FISH.find(x=>x.id===cat.fishId)||{name:cat.fishId,emoji:"🐟"};
+    const size=[cat.length?cat.length+'"':"", cat.weight?cat.weight+" lb":""].filter(Boolean).join(" · ");
+    const when=new Date(cat.when).toLocaleDateString([], {month:"short",day:"numeric",year:"numeric"});
+    const el=document.createElement("div"); el.className="logitem";
+    el.innerHTML=`${cat.photo?`<img src="${cat.photo}" alt="">`:`<span class="lg-emoji">${f.emoji}</span>`}
+      <div class="lg-meta"><b>${escapeHtml(f.name)}</b>
+      <span class="small muted">${when}${size?" · "+size:""}${cat.where?" · "+escapeHtml(cat.where):""}</span>
+      ${cat.notes?`<div class="small">${escapeHtml(cat.notes)}</div>`:""}</div>
+      <button class="btn secondary" style="flex:0 0 auto;padding:8px 10px" onclick="deleteCatch('${cat.id}')">🗑</button>`;
+    box.appendChild(el);
+  });
+}
+
+function showFish(id){
+  const f=FISH.find(x=>x.id===id); if(!f) return;
+  const n=catchCount(id);
+  alert(`${f.emoji}  ${f.name}\n\n${f.blurb}\nWhere to find them: ${f.habitat}.\n\n${n?`You've caught ${n} of these! 🎉`:"Not in your Fish-Dex yet — go get one!"}`);
+}
+
+/* ---------- Logging ---------- */
+let pendingPhoto=null;
+function openLog(preId){
+  const sel=document.getElementById("logSpecies"); sel.innerHTML="";
+  // area species first, then the rest
+  const area=areaFish(); const areaIds=new Set(area.map(f=>f.id));
+  const ordered=[...area, ...FISH.filter(f=>!areaIds.has(f.id))];
+  ordered.forEach(f=>{const o=document.createElement("option");o.value=f.id;o.textContent=`${f.emoji} ${f.name}`;sel.appendChild(o);});
+  if(preId) sel.value=preId;
+  document.getElementById("logWhen").value = toLocalInput(new Date());
+  document.getElementById("logWhere").value = S.place||"";
+  document.getElementById("logLen").value=""; document.getElementById("logWt").value="";
+  document.getElementById("logNotes").value=""; document.getElementById("logPhoto").value="";
+  document.getElementById("photoPreview").innerHTML=""; pendingPhoto=null;
+  document.getElementById("logModal").classList.add("open");
+}
+function closeLog(){ document.getElementById("logModal").classList.remove("open"); }
+
+function previewPhoto(){
+  const file=document.getElementById("logPhoto").files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    // downscale to keep localStorage small
+    const img=new Image();
+    img.onload=()=>{
+      const max=640, sc=Math.min(1, max/Math.max(img.width,img.height));
+      const cv=document.createElement("canvas"); cv.width=img.width*sc; cv.height=img.height*sc;
+      cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height);
+      pendingPhoto=cv.toDataURL("image/jpeg",0.7);
+      document.getElementById("photoPreview").innerHTML=`<img src="${pendingPhoto}" style="max-width:120px;border-radius:12px;margin-top:8px">`;
+    };
+    img.src=e.target.result;
+  };
+  reader.readAsDataURL(file);
+}
+
+function saveCatch(){
+  const fishId=val("logSpecies"); if(!fishId){ toast("Pick a species"); return; }
+  const before = caughtIds().has(fishId);
+  const areaBefore = areaFish(); const areaGotBefore = areaBefore.filter(f=>caughtIds().has(f.id)).length;
+  const cat={
+    id:"c"+Date.now(), fishId,
+    when: val("logWhen")||new Date().toISOString(),
+    length: val("logLen"), weight: val("logWt"),
+    where: val("logWhere"), notes: val("logNotes"), photo: pendingPhoto
+  };
+  S.catches.push(cat);
+  try{ persist(); }
+  catch(e){ // storage full (likely photo) — retry without photo
+    cat.photo=null; S.catches[S.catches.length-1]=cat;
+    try{persist(); toast("Saved (photo too big to store)");}catch(e2){ S.catches.pop(); toast("Storage full — couldn't save"); return; }
+  }
+  closeLog();
+  const f=FISH.find(x=>x.id===fishId);
+  // celebrate
+  const areaAfter=areaFish(); const areaGotAfter=areaAfter.filter(f=>caughtIds().has(f.id)).length;
+  if(!before) toast(`🎉 New species unlocked: ${f?f.name:"fish"}!`);
+  else toast(`Nice one — another ${f?f.name:"fish"}!`);
+  if(areaAfter.length && areaGotAfter===areaAfter.length && areaGotBefore<areaAfter.length)
+    setTimeout(()=>toast("🏆 You caught 'em all in this area!"),1400);
+  showTab("dex");
+}
+
+function deleteCatch(id){
+  if(!confirm("Delete this catch from the log?")) return;
+  S.catches=S.catches.filter(c=>c.id!==id); persist(); renderDex();
+}
+
+function exportLog(){
+  const data={exported:new Date().toISOString(), angler:S.anglerName, region:S.region, catches:S.catches};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+  const a=document.createElement("a"); a.href=URL.createObjectURL(blob);
+  a.download="bass-buddy-catch-log.json"; a.click(); URL.revokeObjectURL(a.href);
+  toast("Catch log downloaded");
+}
+
+/* ============================================================
+   SETUP wiring
+   ============================================================ */
+function regionLabel(r){return {south:"South",northeast:"Northeast",midwest:"Midwest",west:"West",widespread:"All areas"}[r]||r;}
+function waterLabel(w){return {pond:"Pond",lake:"Lake/Reservoir",river:"River"}[w]||w;}
+
+function renderGearChips(){
+  const rw=document.getElementById("gearRods"); rw.innerHTML="";
+  GEAR_RODS.forEach(g=>{
+    const b=document.createElement("button"); b.className="chip"; b.setAttribute("aria-pressed", S.rods.includes(g.id));
+    b.innerHTML=g.label;
+    b.onclick=()=>{ toggleArr(S.rods,g.id); b.setAttribute("aria-pressed",S.rods.includes(g.id)); persist(); };
+    rw.appendChild(b);
+  });
+  const lw=document.getElementById("gearLures"); lw.innerHTML="";
+  GEAR_LURES.forEach(g=>{
+    const b=document.createElement("button"); b.className="chip"; b.setAttribute("aria-pressed", S.lures.includes(g.id));
+    b.innerHTML=(g.emoji?g.emoji+" ":"")+g.label;
+    b.onclick=()=>{ toggleArr(S.lures,g.id); b.setAttribute("aria-pressed",S.lures.includes(g.id)); persist(); };
+    lw.appendChild(b);
+  });
+}
+function toggleArr(arr,id){ const i=arr.indexOf(id); if(i<0) arr.push(id); else arr.splice(i,1); }
+
+function onRegionChange(){ S.region=val("region"); S.regionAuto=false; updateRegsLink(); persist(); }
+function syncRegionUI(){ const e=document.getElementById("region"); if(e) e.value=S.region; updateRegsLink(); }
+function updateRegsLink(){
+  const el=document.getElementById("regsLink"); if(!el) return;
+  el.innerHTML=`📜 <b>${regionLabel(S.region)}</b> — every state requires a fishing license (kids are often free/discounted).
+    <a href="${regsUrl(S.region)}" target="_blank" rel="noopener">Find your state's rules →</a>`;
+}
+
+function resetAll(){
+  if(!confirm("This erases your gear, profile, and entire catch log on this device. Continue?")) return;
+  localStorage.removeItem("bassbuddy"); S=JSON.parse(JSON.stringify(DEFAULT_STATE)); initUI(); toast("All data reset");
+}
+
+/* ---------- helpers ---------- */
+function toLocalInput(d){ const p=n=>String(n).padStart(2,"0");
+  return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`; }
+
+/* ---------- Init ---------- */
+function initUI(){
+  applyTheme();
+  // plan tab
+  document.getElementById("place").value=S.place||"";
+  document.getElementById("waterType").value=S.waterType;
+  document.getElementById("tripTime").value=toLocalInput(new Date());
+  if(S.lat!=null) document.getElementById("locStatus").innerHTML=`📍 Set to <b>${escapeHtml(S.place||"saved location")}</b>`;
+  // setup tab
+  document.getElementById("anglerName").value=S.anglerName||"";
+  document.getElementById("anglerAge").value=S.anglerAge;
+  document.getElementById("anglerSkill").value=S.anglerSkill;
+  document.getElementById("openToBuy").checked=S.openToBuy;
+  document.getElementById("region").value=S.region;
+  renderGearChips();
+  updateRegsLink();
+}
+initUI();
+</script>
+</body>
+</html>

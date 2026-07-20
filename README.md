@@ -1,5 +1,8 @@
 # 🎣 Bass Buddy
 
+**▶️ Live app: https://erictlin606.github.io/BassBuddy/** — open it on your phone and
+"Add to Home Screen" to use it like an app at the water.
+
 A single-page bass fishing coach **and** a Pokédex-style catch log ("Fish-Dex"), built for
 a parent learning to fish with their kid. Open it on your phone at the water — no app store,
 no account, no server.

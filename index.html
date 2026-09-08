@@ -166,6 +166,9 @@
       <label for="tripTime">When?</label>
       <input id="tripTime" type="datetime-local" />
 
+      <label>What are you fishing for? <span class="muted" style="font-weight:400">(pick one or more)</span></label>
+      <div class="chips" id="targetChips"></div>
+
       <button class="btn wide" style="margin-top:16px" onclick="planTrip()">Get my recommendations</button>
       <div class="toggle small"><input type="checkbox" id="manualWx" onchange="toggleManualWx()" style="width:auto">
         <label for="manualWx" style="margin:0">No internet? Enter conditions manually</label></div>
@@ -381,12 +384,81 @@ const GEAR_LURES = [
   {id:"topwater", label:"Topwater (frog/popper)", emoji:"💥"},
   {id:"spoon", label:"Spoon", emoji:"🥄"}
 ];
+const LURE_BUY = {
+  plastic:"a pack of 4\" green-pumpkin soft plastic stick worms (Senko-style) — the easiest bass bait to learn",
+  spinner:"a 3/8oz white/chartreuse spinnerbait — nearly weedless and casts a mile",
+  chatter:"a 3/8oz bladed jig (chatterbait) in white or black/blue",
+  crank:"a shallow square-bill crankbait in a shad or craw color",
+  jig:"a 3/8oz black/blue finesse jig with a craw trailer",
+  topwater:"a hollow-body frog (for weeds) or a small popper",
+  spoon:"a 1/2oz silver casting spoon",
+  live:"nightcrawlers, a few #6 hooks, and (for catfish/carp) some cut bait or canned corn",
+  bobber:"a small bobber + #6 hooks — the #1 way to get a kid catching"
+};
+
+/* Target species types — mirrors the FISH.cat taxonomy so Plan-a-trip and Fish-Dex speak the
+   same language. Each entry (besides bass, which uses the full engine above) carries its own
+   where/lure/timing tips since the bite-score engine is tuned to largemouth bass behavior. */
+const TYPE_INFO = {
+  bass:    {label:"Bass",               emoji:"🐟"},
+  panfish: {label:"Panfish",            emoji:"🐠"},
+  catfish: {label:"Catfish",            emoji:"🐡"},
+  pike:    {label:"Pike & Muskie",      emoji:"🐊"},
+  trout:   {label:"Trout",              emoji:"🐟"},
+  other:   {label:"Walleye & Stripers", emoji:"🐟"},
+  rough:   {label:"Carp",               emoji:"🐟"}
+};
+const TYPE_GUIDE = {
+  panfish: {
+    where:["Docks, brush piles, weed edges, and shallow flats — panfish school around any bit of cover.",
+      "In spring, look for round, cleared spawning beds in the shallows; in summer/winter they often suspend near deeper creek channels or drop-offs."],
+    want:["bobber","live","jig","plastic"],
+    why:"A simple bobber-and-worm rig is the most reliable panfish setup ever invented — perfect for building confidence.",
+    timing:"Panfish bite most of the day, with an extra flurry at dawn and dusk. Overcast days can produce action all day long."
+  },
+  catfish: {
+    where:["Deep holes, current breaks, and soft muddy bottoms — catfish hunt by scent along the bottom.",
+      "After rain, check the mouths of creeks and ditches washing food into the main water."],
+    want:["live"],
+    why:"Catfish eat with their nose — a simple bottom rig with nightcrawlers, cut bait, or chicken liver is all you need.",
+    timing:"Catfish feed most actively from dusk through the night, though channel cats will bite during the day in murky water too."
+  },
+  pike: {
+    where:["Weed edges next to deeper water and shallow, weedy bays — pike ambush from cover.",
+      "In fall, cooling water often triggers a big pre-winter feeding binge."],
+    want:["spinner","spoon","crank"],
+    why:"Pike want a fast, flashy target — a big spinner, spoon, or crankbait triggers their ambush instinct. Use a wire leader or they'll bite through your line!",
+    timing:"Low light — early morning, evening, and overcast days — is prime pike time."
+  },
+  trout: {
+    where:["Cool, moving water — riffles, the pools below them, and undercut banks — or drop-offs in stocked lakes.",
+      "Look for shade and any spring or feeder-creek inflow, which keeps water cool in summer."],
+    want:["live","spinner","spoon"],
+    why:"Trout respond well to a worm or salmon eggs drifted naturally, or a small spinner worked through a pool.",
+    timing:"Cool mornings and evenings are best, especially once water warms — trout get sluggish above about 65°F water."
+  },
+  other: {
+    where:["Rocky humps, drop-offs, main-lake points, and open water where baitfish school.",
+      "Watch for diving birds or surface 'jumps' — that's schooling fish blitzing bait."],
+    want:["jig","crank","live","spoon"],
+    why:"A jig bounced along the bottom or a crankbait dug through deeper structure covers water and finds these light-sensitive feeders.",
+    timing:"Low light is prime — dawn, dusk, and after dark — since these fish feed heavily using their eyes in dim light."
+  },
+  rough: {
+    where:["Shallow mud flats, weedy bays, and warm sunny banks — carp cruise and feed on the bottom.",
+      "Look for muddy 'clouds' or tails breaking the surface — that's carp feeding."],
+    want:["live"],
+    why:"A simple bottom rig baited with canned corn, dough bait, or worms is the classic, kid-friendly way to catch carp.",
+    timing:"Warm, calm, sunny days get carp cruising and feeding actively in the shallows."
+  }
+};
 
 /* ---------- State ---------- */
 const DEFAULT_STATE = {
   place:"", lat:null, lon:null, waterType:"lake", region:"midwest", regionAuto:false,
   anglerName:"", anglerAge:7, anglerSkill:"learning",
   rods:["spincast"], lures:["live","bobber"], openToBuy:true,
+  targets:["bass"],
   catches:[], theme:null
 };
 let S = load();
@@ -656,20 +728,30 @@ function lureAdvice(water, phase, season, wx, owned, openToBuy){
   else why="A soft plastic is the never-fail starter; add a moving bait to cover water and find active fish.";
   if(order.includes("topwater")&&(have.includes("topwater"))) why+=" And don't miss the <b>topwater</b> window at low light — the most fun bite in fishing.";
 
-  // starter buy suggestions
-  const BUY = {
-    plastic:"a pack of 4\" green-pumpkin soft plastic stick worms (Senko-style) — the easiest bass bait to learn",
-    spinner:"a 3/8oz white/chartreuse spinnerbait — nearly weedless and casts a mile",
-    chatter:"a 3/8oz bladed jig (chatterbait) in white or black/blue",
-    crank:"a shallow square-bill crankbait in a shad or craw color",
-    jig:"a 3/8oz black/blue finesse jig with a craw trailer",
-    topwater:"a hollow-body frog (for weeds) or a small popper",
-    spoon:"a 1/2oz silver casting spoon",
-    live:"nightcrawlers and a few #6 hooks",
-    bobber:"a small bobber + #6 hooks — the #1 way to get a kid catching"
-  };
-  const buys = openToBuy ? missing.map(id=>({id, text:BUY[id]})).filter(b=>b.text) : [];
+  const buys = openToBuy ? missing.map(id=>({id, text:LURE_BUY[id]})).filter(b=>b.text) : [];
   return {have, why, buys, order};
+}
+
+/* Type-aware wrappers: bass reuses the full engine above; other types use their curated
+   TYPE_GUIDE entry so each selected target gets its own where/what/when guidance. */
+function whereToFishFor(typeId, water, phase, season, wx){
+  if(typeId==="bass") return whereToFish(water, phase, season, wx);
+  const bullets=[...TYPE_GUIDE[typeId].where];
+  if(wx.wind>=6) bullets.push("Fish the windblown bank — wind pushes food into it, and fish follow.");
+  return bullets;
+}
+function timeGuidanceFor(typeId, season, wx){
+  if(typeId==="bass") return timeWindows(season, wx);
+  return TYPE_GUIDE[typeId].timing;
+}
+function lureAdviceFor(typeId, water, phase, season, wx, owned, openToBuy){
+  if(typeId==="bass") return lureAdvice(water, phase, season, wx, owned, openToBuy);
+  const cfg=TYPE_GUIDE[typeId];
+  const order=[...new Set(cfg.want)];
+  const have=order.filter(id=>owned.includes(id));
+  const missing=order.filter(id=>!owned.includes(id)).slice(0,2);
+  const buys = openToBuy ? missing.map(id=>({id, text:LURE_BUY[id]})).filter(b=>b.text) : [];
+  return {have, why:cfg.why, buys, order};
 }
 
 function ageStrategy(age, skill){
@@ -739,10 +821,8 @@ async function planTrip(){
   const {score,factors}=biteScore(wx,date,season);
   const rate=rateLabel(score);
   const owned=S.lures;
-  const lure=lureAdvice(water,phase,season,wx,owned,S.openToBuy);
-  const where=whereToFish(water,phase,season,wx);
   const strat=ageStrategy(S.anglerAge,S.anglerSkill);
-  const windows=timeWindows(season,wx);
+  const targets = (S.targets&&S.targets.length) ? S.targets : ["bass"];
   const who = S.anglerName? S.anglerName : "your angler";
 
   const skyTxt = wx.cloud>=70?"overcast":wx.cloud>=35?"partly cloudy":"mostly clear";
@@ -765,29 +845,26 @@ async function planTrip(){
     </div>
     <h3>What's driving it</h3>
     <ul class="tight">${factors.map(f=>`<li><b>${f[0]}</b> ${f[1]}</li>`).join("")}</ul>
-    <p class="small muted">Phase: ${phase.label}.</p>
+    <p class="small muted">Bass phase: ${phase.label} (drives the bass-specific tips below).</p>
   </div>`;
 
-  // Time
-  html+=`<div class="card"><h2>⏰ When to fish</h2><p>${windows}</p></div>`;
-
-  // Where
-  html+=`<div class="card"><h2>📍 Where to cast</h2><ul class="tight">${where.map(b=>`<li>${b}</li>`).join("")}</ul></div>`;
-
-  // Lures
-  let lureHtml=`<div class="card"><h2>🎣 What to throw</h2><p class="why muted small">${lure.why}</p>`;
-  if(lure.have.length){
-    lureHtml+=`<h3>From your tackle box</h3><ul class="tight">`+
-      lure.have.map(id=>{const g=GEAR_LURES.find(x=>x.id===id);return `<li>${g.emoji||"🎣"} <b>${g.label}</b></li>`;}).join("")+`</ul>`;
-  } else {
-    lureHtml+=`<p class="note">Your tackle box doesn't have today's top picks yet — see the suggestions below.</p>`;
-  }
-  if(lure.buys.length){
-    lureHtml+=`<h3>Worth picking up</h3><ul class="tight">`+
-      lure.buys.map(b=>`<li>🛒 ${b.text}</li>`).join("")+`</ul>`;
-  }
-  lureHtml+=`</div>`;
-  html+=lureHtml;
+  // Per-target-species guidance
+  targets.forEach(t=>{
+    const info = TYPE_INFO[t] || TYPE_INFO.bass;
+    const where = whereToFishFor(t, water, phase, season, wx);
+    const timing = timeGuidanceFor(t, season, wx);
+    const lure = lureAdviceFor(t, water, phase, season, wx, owned, S.openToBuy);
+    html+=`<div class="card">
+      <h2>${info.emoji} Fishing for ${info.label}</h2>
+      <h3>⏰ When</h3><p>${timing}</p>
+      <h3>📍 Where</h3><ul class="tight">${where.map(b=>`<li>${b}</li>`).join("")}</ul>
+      <h3>🎣 What to throw</h3><p class="why muted small">${lure.why}</p>
+      ${lure.have.length
+        ? `<ul class="tight">${lure.have.map(id=>{const g=GEAR_LURES.find(x=>x.id===id);return `<li>${g.emoji||"🎣"} <b>${g.label}</b> — you've got this</li>`;}).join("")}</ul>`
+        : `<p class="note small">Your tackle box doesn't have today's top pick yet — see below.</p>`}
+      ${lure.buys.length ? `<p class="small"><b>🛒 Worth picking up:</b> ${lure.buys.map(b=>b.text).join("; ")}</p>` : ""}
+    </div>`;
+  });
 
   // Strategy (age)
   html+=`<div class="card"><h2>🧠 Strategy for ${escapeHtml(who)} <span class="badge">${S.anglerAge} yrs · ${skillLabel(S.anglerSkill)}</span></h2>
@@ -983,6 +1060,22 @@ function renderGearChips(){
 }
 function toggleArr(arr,id){ const i=arr.indexOf(id); if(i<0) arr.push(id); else arr.splice(i,1); }
 
+function renderTargetChips(){
+  const wrap=document.getElementById("targetChips"); if(!wrap) return; wrap.innerHTML="";
+  Object.keys(TYPE_INFO).forEach(id=>{
+    const info=TYPE_INFO[id];
+    const b=document.createElement("button"); b.className="chip"; b.setAttribute("aria-pressed", S.targets.includes(id));
+    b.innerHTML=`${info.emoji} ${info.label}`;
+    b.onclick=()=>{
+      if(S.targets.includes(id) && S.targets.length===1){ toast("Pick at least one type of fish"); return; }
+      toggleArr(S.targets, id);
+      b.setAttribute("aria-pressed", S.targets.includes(id));
+      persist();
+    };
+    wrap.appendChild(b);
+  });
+}
+
 function onRegionChange(){ S.region=val("region"); S.regionAuto=false; updateRegsLink(); persist(); }
 function syncRegionUI(){ const e=document.getElementById("region"); if(e) e.value=S.region; updateRegsLink(); }
 function updateRegsLink(){
@@ -1015,6 +1108,7 @@ function initUI(){
   document.getElementById("openToBuy").checked=S.openToBuy;
   document.getElementById("region").value=S.region;
   renderGearChips();
+  renderTargetChips();
   updateRegsLink();
 }
 initUI();
